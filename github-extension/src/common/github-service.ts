@@ -119,7 +119,7 @@ export interface GithubService {
      * @param {string} id Id of the pull-request.
      * @param pullRequest Pull-Request object that contains updated fields.
      */
-    updatePullRequest(credentials: Credentials, owner: string, repository: string, id: string, pullRequest: PullRequest): Promise<void>;
+    updatePullRequest(credentials: Credentials, owner: string, repository: string, id: number, pullRequest: PullRequest): Promise<void>;
 
     /**
      * Get organizations of the logined user.
@@ -182,6 +182,6 @@ export interface SshKeyPair {
      * Key pair identifier.
      */
     name: string;
-    privateKey?: string;
-    publicKey?: string;
+    privateKey: string;
+    publicKey: string;
 }

@@ -146,7 +146,7 @@ export interface PullRequest {
     readonly comments_url: string;
     readonly statuses_url: string;
     readonly number: number;
-    readonly state: string;
+    readonly state: "open"|"closed";
     readonly title: string;
     readonly body: string;
     readonly assignee: Assignee;

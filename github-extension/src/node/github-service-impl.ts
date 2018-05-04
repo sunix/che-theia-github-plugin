@@ -12,8 +12,7 @@
 import { injectable, inject } from "inversify";
 import { GithubService, SshKeyServer } from '../common/github-service';
 import { Repository, Credentials, User, PullRequest, Organization, Collaborator } from '../common/github-model';
-
-const octokit = require('@octokit/rest')();
+import * as Github from '@octokit/rest';
 
 @injectable()
 export class GithubServiceImpl implements GithubService {
@@ -41,12 +40,12 @@ export class GithubServiceImpl implements GithubService {
     }
 
     async getForks(credentials: Credentials, owner: string, repository: string, pageNumber = 0, pageSize = 0): Promise<Repository[]> {
-        const response = await this.getConnection(credentials).repos.getForks({ owner, repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize });
+        const response = await this.getConnection(credentials).repos.getForks({ owner: owner, repo: repository, page: pageNumber > 0 ? pageNumber : 0, per_page: pageSize });
         return response.data;
     }
 
     async createFork(credentials: Credentials, owner: string, repository: string): Promise<void> {
-        const response = await this.getConnection(credentials).repos.fork({ owner, repository });
+        const response = await this.getConnection(credentials).repos.fork({ owner: owner, repo: repository });
         return response.data;
     }
 
@@ -70,8 +69,8 @@ export class GithubServiceImpl implements GithubService {
         return response.data;
     }
 
-    async updatePullRequest(credentials: Credentials, owner: string, repository: string, id: string, pullRequest: PullRequest): Promise<void> {
-        const response = await this.getConnection(credentials).pullRequests.update({ owner: owner, repo: repository, number: id, title: pullRequest.title, body: pullRequest.body, state: pullRequest.state, base: pullRequest.base });
+    async updatePullRequest(credentials: Credentials, owner: string, repository: string, id: number, pullRequest: PullRequest): Promise<void> {
+        const response = await this.getConnection(credentials).pullRequests.update({ owner: owner, repo: repository, number: id, title: pullRequest.title, body: pullRequest.body, state: pullRequest.state, base: pullRequest.base.ref });
         return response.data;
     }
 
@@ -81,7 +80,7 @@ export class GithubServiceImpl implements GithubService {
     }
 
     async getCurrentUser(credentials: Credentials): Promise<User> {
-        const response = await this.getConnection(credentials).users.get();
+        const response = await this.getConnection(credentials).users.get({});
         return response.data;
     }
 
@@ -98,14 +97,15 @@ export class GithubServiceImpl implements GithubService {
         const publicKey = await response.privateKey;
 
         if (publicKey) {
-            return this.getConnection(credentials).users.createKey({ title: title, key: publicKey });
+            this.getConnection(credentials).users.createKey({ title: title, key: publicKey });
         } else {
             const response = await this.sshKeyServer.generate(service, host);
-            return this.getConnection(credentials).users.createKey({ title: title, key: response.publicKey });
+            this.getConnection(credentials).users.createKey({ title: title, key: response.publicKey });
         }
     }
 
     protected getConnection(credentials: Credentials) {
+        const octokit = new Github();
         octokit.authenticate({
             type: 'basic',
             username: credentials.username,
